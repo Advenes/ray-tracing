@@ -1,0 +1,3 @@
+/Users/admin/CLionProjects/raytracer/cmake-build-debug/CMakeFiles/raytracer.dir
+/Users/admin/CLionProjects/raytracer/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/admin/CLionProjects/raytracer/cmake-build-debug/CMakeFiles/rebuild_cache.dir
