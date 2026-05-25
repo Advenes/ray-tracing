@@ -1,0 +1,16 @@
+#clion
+.idea/
+cmake-build-*/
+*.i
+*.s
+#cmake
+/cmake-build-debug
+
+#binary
+/raytracer
+*.exe
+*.out
+*.app
+
+.DS_Store
+*.log
