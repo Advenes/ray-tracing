@@ -8,4 +8,9 @@ add_executable(raytracer main.cpp
         utils/color.h
         utils/delta.h
         utils/ray.h
-    )
+        hittable/hittable.h
+        hittable/sphere.h
+        hittable/hittable_list.h
+        math/constants.h
+        utils/common_includes.h
+)

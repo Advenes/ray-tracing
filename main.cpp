@@ -1,7 +1,9 @@
 #include <iostream>
-#include "utils/color.h"
-#include "utils/vec3.h"
-#include "utils/ray.h"
+
+#include "hittable/hittable_list.h"
+#include "hittable/sphere.h"
+#include "utils/common_includes.h"
+
 
 int main() {
 
@@ -13,6 +15,12 @@ int main() {
     const double aspect_ratio = double (img_width) / double (img_height);
     const double viewport_height = 2.0;
     const double viewport_width = aspect_ratio * viewport_height;
+
+    hittable_list world;
+
+    world.add(std::make_shared<sphere>(vec3(0,0,-150), 100));
+    world.add(std::make_shared<sphere>(vec3(0,-105,-3), 100));
+    world.add(std::make_shared<sphere>(vec3(0,0,-1), 0.5));
 
     vec3 camera_pos = {0,0,0};
 
@@ -33,12 +41,8 @@ int main() {
             vec3 pixel_center = first_pixel + pixel_delta_ltr * j + pixel_delta_ttb * i;
             auto ray_dir = pixel_center - camera_pos;
             ray r(camera_pos, ray_dir);
-            auto color = ray_color(r);
-            if (hitSphere(r, sphere_r, sphere_center)) {
-                write_color(std::cout, color, 1);
-                continue;
-            }
-            write_color(std::cout, color, 0);
+            auto color = ray_color(r, world);
+            write_color(std::cout, color);
         }
     }
 }
