@@ -4,10 +4,10 @@
 
 class camera {
 public:
-    int img_width = 512;
+    int img_width = 256;
     double aspect_ratio = 16.0 / 9.0;
-    int samples_per_pixel = 10;
-    int max_bounces = 10;
+    int samples_per_pixel = 20;
+    int max_bounces = 25;
 
     void render(const hittable& world) {
 
@@ -91,9 +91,9 @@ private:
     vec3 ray_color(const ray& r,const int bounces_left, const hittable& world) const {
         if (bounces_left == 0) return {0,0,0};
         hit_record rec; // creating a record if we hit anything on this specific pixel
-        if (world.hit(r, interval(0, infinity), rec)) { // if anything is hit
-            vec3 direction = random_on_hemisphere(rec.normal);
-            return 0.5 * ray_color(ray(rec.p, direction), bounces_left-1, world);
+        if (world.hit(r, interval(0.001, infinity), rec)) { // if anything is hit
+            vec3 direction = rec.normal + random_unit_vector();
+            return 0.3 * ray_color(ray(rec.p, direction), bounces_left-1, world);
         }
 
         vec3 unit_direction = unit_vector(r.direction()); // if nothing is hit we simply apply a top-down sky fade
@@ -101,11 +101,23 @@ private:
         return (1.0-a)*vec3(1.0, 1.0, 1.0) + a*vec3(0.5, 0.7, 1.0);
     }
 
+    double linear_to_gamma(double linear_component)
+    {
+        if (linear_component > 0)
+            return std::sqrt(linear_component);
+
+        return 0;
+    }
+
     void write_color(std::ostream& out, const vec3& v) {
 
         auto r = v.x();
         auto g = v.y();
         auto b = v.z();
+
+        r = linear_to_gamma(r);
+        g = linear_to_gamma(g);
+        b = linear_to_gamma(b);
 
         static const interval intensity(0.000, 0.999);
         int rbyte = int(256 * intensity.clamp(r));
