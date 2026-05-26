@@ -18,13 +18,13 @@ public:
         objects.push_back(object);
     }
 
-    bool hit(const ray& r, double ray_tmin, double ray_tmax, hit_record& rec) const override {
+    bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
         hit_record temp_rec; // temporary hit record where we store information if we have hit anything
         bool hit_anything = false;
-        auto closest_so_far = ray_tmax;
+        auto closest_so_far = ray_t.max;
 
         for (const auto& object : objects) {
-            if (object->hit(r, ray_tmin, closest_so_far, temp_rec)) { // checking if any of the hittable inside array are hit
+            if (object->hit(r, interval(ray_t.min, closest_so_far), temp_rec)) { // checking if any of the hittable inside array are hit
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
                 rec = temp_rec; // setting the real hit record to the "returned" temp hit record

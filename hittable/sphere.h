@@ -7,7 +7,7 @@ class sphere : public hittable {
     public:
     sphere(const vec3& center, double radius) : center(center), radius(radius) {}
 
-    bool hit(const ray& r, double t_min, double t_max, hit_record& rec) const override {
+    bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
         vec3 oc = center - r.origin(); // vector from ray to center of sphere
         auto a = r.direction().length_squared(); // b * b (square length of direction of radius
         auto half_b = dot(r.direction(), oc); // half b param
@@ -20,9 +20,9 @@ class sphere : public hittable {
 
         // ray can hit the sphere through it, giving us delta > 0 and two roots of equation
         auto root = (half_b - sqrtD) / a;
-        if (root <= t_min || t_max <= root) { // this checks if 1st root is in max and min
+        if (!ray_t.surrounds(root)) { // this checks if 1st root is in max and min
             root = (half_b + sqrtD) / a;
-            if (root <= t_min || t_max <= root) // same for 2nd
+            if (!ray_t.surrounds(root)) // same for 2nd
                 return false; // if both are not inside -> false
         }
 

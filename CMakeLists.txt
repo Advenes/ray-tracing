@@ -13,4 +13,5 @@ add_executable(raytracer main.cpp
         hittable/hittable_list.h
         math/constants.h
         utils/common_includes.h
+        camera/camera.h
 )
