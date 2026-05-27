@@ -1,13 +1,14 @@
 #pragma once
 #include "../utils/common_includes.h"
 #include "../hittable/hittable_list.h"
+#include "../material/material.h"
 
 class camera {
 public:
-    int img_width = 256;
-    double aspect_ratio = 16.0 / 9.0;
-    int samples_per_pixel = 20;
-    int max_bounces = 25;
+    int img_width = 512;
+    double aspect_ratio = 1.0;
+    int samples_per_pixel = 100;
+    int max_bounces = 100;
 
     void render(const hittable& world) {
 
@@ -90,10 +91,16 @@ private:
 
     vec3 ray_color(const ray& r,const int bounces_left, const hittable& world) const {
         if (bounces_left == 0) return {0,0,0};
+
         hit_record rec; // creating a record if we hit anything on this specific pixel
-        if (world.hit(r, interval(0.001, infinity), rec)) { // if anything is hit
-            vec3 direction = rec.normal + random_unit_vector();
-            return 0.3 * ray_color(ray(rec.p, direction), bounces_left-1, world);
+
+        if (world.hit(r, interval(0.001, infinity), rec)) {// if anything is hit
+            ray scattered;
+            vec3 attenuation;
+            if (rec.mat->scatter(r, rec, attenuation, scattered)) {
+                return attenuation * ray_color(scattered, bounces_left-1, world);
+            }
+            return {0,0,0};
         }
 
         vec3 unit_direction = unit_vector(r.direction()); // if nothing is hit we simply apply a top-down sky fade

@@ -5,7 +5,9 @@
 
 class sphere : public hittable {
     public:
-    sphere(const vec3& center, double radius) : center(center), radius(radius) {}
+    sphere(const vec3& center, double radius, shared_ptr<material> mat) : center(center), radius(radius), mat(std::move(mat)) {
+        // init the texture
+    }
 
     bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
         vec3 oc = center - r.origin(); // vector from ray to center of sphere
@@ -28,6 +30,7 @@ class sphere : public hittable {
 
         rec.t = root; // time param is set to root
         rec.p = r.at(rec.t); // exact point in 3d where the sphere was hit
+        rec.mat = mat; // material of sphere
         vec3 outward_normal = (rec.p - center) / radius;
         rec.set_face_normal(r, outward_normal); // setting the normal based on how the ray hit our object
 
@@ -40,4 +43,5 @@ class sphere : public hittable {
 private:
     vec3 center;
     double radius;
+    shared_ptr<material> mat;
 };

@@ -14,4 +14,8 @@ add_executable(raytracer main.cpp
         math/constants.h
         utils/common_includes.h
         camera/camera.h
+        material/material.h
+        "material/lambertian.h"
+        material/metal.h
+        material/fuzzy_metal.h
 )

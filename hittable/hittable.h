@@ -3,11 +3,14 @@
 #include "../utils/vec3.h"
 #include "../utils/ray.h"
 
+class material;
+
 class hit_record {
 public:
     vec3 p; // exact point that collides with the object
     vec3 normal; // a normal from that object
     double t; // time param
+    shared_ptr<material> mat;
 
     // true if hit from the outside, false if hit from the inside
     bool front_face;
