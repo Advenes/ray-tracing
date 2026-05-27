@@ -7,6 +7,17 @@
 #include "material/metal.h"
 #include "material/lambertian.h"
 #include "material/fuzzy_metal.h"
+#include "application/application.h"
+
+enum class render_type {
+    PPM_FILE = 1,
+    WINDOW = 2
+};
+
+constexpr render_type RENDER_TYPE = render_type::WINDOW;
+
+constexpr int IMG_WIDTH = 256;
+constexpr double ASPECT_RATIO = 16.0/9.0;
 
 int main() {
 
@@ -19,6 +30,13 @@ int main() {
     world.add(std::make_shared<sphere>(vec3(-1.5,0,-1), 0.5, std::make_shared<lambertian>(vec3{0.1,0.4,0.9})));
     world.add(std::make_shared<sphere>(vec3(0.9,-0.1,-0.9), 0.4, std::make_shared<fuzzy_metal>(vec3{1.0,1.0,0.1}, 0.25)));
 
-    camera camera;
-    camera.render(world);
+    camera camera(IMG_WIDTH, ASPECT_RATIO);
+
+    if (RENDER_TYPE == render_type::PPM_FILE) {
+        camera.render(world);
+    }
+    else if (RENDER_TYPE == render_type::WINDOW) {
+        application application(IMG_WIDTH, world, camera);
+        application.run();
+    }
 }

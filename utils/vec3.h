@@ -1,7 +1,6 @@
 
 #pragma once
 #include <iostream>
-#include <sys/errno.h>
 
 class vec3 {
 public:

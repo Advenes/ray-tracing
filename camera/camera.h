@@ -5,13 +5,17 @@
 
 class camera {
 public:
-    int img_width = 512;
-    double aspect_ratio = 1.0;
-    int samples_per_pixel = 100;
-    int max_bounces = 100;
+    camera(const int width, const double aspect) {
+        img_width = width;
+        aspect_ratio = aspect;
+    }
+
+    int img_width;
+    double aspect_ratio;
+    int samples_per_pixel = 20;
+    int max_bounces = 20;
 
     void render(const hittable& world) {
-
         initialize();
         // ppm format stuff
         std::cout << "P3\n" << img_width << ' ' << img_height << "\n255" <<  '\n';
@@ -33,7 +37,35 @@ public:
 
     }
 
+    void render_to_window(const hittable& world, unsigned char* buffer, int width, int height) {
+        initialize();
+
+        for (int i = 0; i < height; i++) {
+            std::clog << "\rScanlines remaining: " << i << ' ' << height << '\n' << std::flush;
+            for (int j = 0; j < width; j++) {
+                int index = (i * img_width + j) * 3;
+                vec3 color(0,0,0);
+
+                for (int sample = 0; sample < samples_per_pixel; sample++) {
+                    ray r = get_ray(j, i);
+                    color += ray_color(r, max_bounces, world);
+                }
+
+                color *= pixel_samples_scale;
+
+                // Korekcja gamma (linear to gamma 2)
+                double r = linear_to_gamma(color.x());
+                double g = linear_to_gamma(color.y());
+                double b = linear_to_gamma(color.z());
+
+                buffer[index] = static_cast<unsigned char>(255.999 * color.x());
+                buffer[index + 1] = static_cast<unsigned char>(255.999 * color.y());
+                buffer[index + 2] = static_cast<unsigned char>(255.999 * color.z());
+            }
+        }
+    }
 private:
+
 
     int img_height;
     vec3 camera_pos;

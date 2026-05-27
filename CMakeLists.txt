@@ -15,7 +15,25 @@ add_executable(raytracer main.cpp
         utils/common_includes.h
         camera/camera.h
         material/material.h
-        "material/lambertian.h"
+        material/lambertian.h
         material/metal.h
         material/fuzzy_metal.h
+        application/application.h
+
+        # glad
+        external/glad/src/glad.c
 )
+
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+
+add_subdirectory(external/glfw)
+
+include_directories(external/glad/include)
+include_directories(external/glfw/include)
+
+target_link_libraries(raytracer glfw)
+if(NOT APPLE)
+    target_link_libraries(Raytracer OpenGL::GL)
+endif()
