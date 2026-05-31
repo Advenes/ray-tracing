@@ -3,6 +3,13 @@ project(raytracer)
 
 set(CMAKE_CXX_STANDARD 20)
 
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+
+add_subdirectory(external/glfw)
+find_package(OpenGL REQUIRED)
+
 add_executable(raytracer main.cpp
         utils/vec3.h
         utils/color.h
@@ -44,19 +51,19 @@ add_executable(raytracer main.cpp
         camera/camera_controller.h
 )
 
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
-add_subdirectory(external/glfw)
+target_include_directories(raytracer PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    external/glad/include
+    external/glfw/include
+    external/imgui
+    external/imgui/backends
+)
 
-include_directories(external/glad/include)
-include_directories(external/glfw/include)
-include_directories(external/imgui)
-include_directories(external/imgui/backends)
+target_link_libraries(raytracer PRIVATE glfw)
 
-
-target_link_libraries(raytracer glfw)
-if(NOT APPLE)
-    target_link_libraries(Raytracer OpenGL::GL)
+if(APPLE)
+    target_link_libraries(raytracer PRIVATE "-framework OpenGL")
+else()
+    target_link_libraries(raytracer PRIVATE OpenGL::GL)
 endif()

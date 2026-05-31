@@ -17,7 +17,7 @@ public:
     void run() {
         init_glfw_window();
 
-        ui.create_ui(window, &camera.samples_per_pixel, &camera.max_bounces,
+        ui.create_ui(window, &camera.samples_per_pixel, &camera.max_bounces, &camera.img_width, &camera.img_height,
             [this](){camera.render_to_window(world, pixel_buffer.data());},
             [this](){camera.render(world);}
 
@@ -44,7 +44,7 @@ private:
         glfwMakeContextCurrent(window);
 
         if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-            std::cerr << "GLAD exploaded";
+            std::cerr << "GLAD exploded";
             exit(EXIT_FAILURE);
         }
     }
@@ -71,6 +71,18 @@ private:
 
     }
 
+    void update_texture(const GLuint id, const std::vector<unsigned char> &buffer, const int &w, const int &h) {
+        glBindTexture(GL_TEXTURE_2D, id);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, buffer.data());
+    }
+
+    void update_framebuffer(const GLuint id, const int &w, const int &h) {
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, id);
+        glBlitFramebuffer(0, 0, w, h, 0, h, w, 0, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+    }
+
     void render()
     {
         glfwPollEvents();
@@ -80,12 +92,7 @@ private:
         int last_width = *width;
         int last_height = *height;
 
-        camera.width = width;
-        camera.height = height;
         camera.render_to_window(world, pixel_buffer.data());
-
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, *width, *height, GL_RGB, GL_UNSIGNED_BYTE, pixel_buffer.data());
 
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
@@ -102,22 +109,12 @@ private:
                 pixel_buffer.resize(*width * *height * 3);
                 camera.render_to_window(world, pixel_buffer.data());
 
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, *width, *height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-
             }
 
-            glBindTexture(GL_TEXTURE_2D, textureID);
-
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glViewport(0, 0, *width, *height);
-
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, framebufferID);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
-            glBlitFramebuffer(0, 0, *width, *height, 0, *height, *width, 0, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+            update_texture(textureID, pixel_buffer, *width, *height);
+            update_framebuffer(framebufferID, *width, *height);
 
             ui.render_ui();
-
             glfwSwapBuffers(window);
 
         }

@@ -2,6 +2,7 @@
 #include "../utils/common_includes.h"
 #include "../hittable/hittable_list.h"
 #include "../material/material.h"
+#include <fstream>
 
 class camera {
 public:
@@ -10,18 +11,19 @@ public:
 
     int *width;
     int *height;
+    int img_width = 48;
+    int img_height = 48;
     int samples_per_pixel = 10;
     int max_bounces = 10;
 
     void render(const hittable& world) {
+        std::ofstream file("output.ppm");
         initialize();
         // ppm format stuff
-        std::cout << "P3\n" << *width << ' ' << *height << "\n255" <<  '\n';
-
-
-        for (int i = 0; i < *height; i++) {
-            std::clog << "\rScanlines remaining: " << i << ' ' << *height << '\n' << std::flush;
-            for (int j = 0; j < *width; j++) {
+        file << "P3\n" << img_width << ' ' << img_height << "\n255" <<  '\n';
+        for (int i = 0; i < img_height; i++) {
+            std::clog << "\rScanlines remaining: " << i << ' ' << img_height << '\n';
+            for (int j = 0; j < img_width; j++) {
                 vec3 color(0,0,0);
                 // we sample randomly around our pixel and make a color out of it
                 // to create a basic antialiasing
@@ -29,10 +31,15 @@ public:
                     ray r = get_ray(j, i);
                     color += ray_color(r, max_bounces, world);
                 }
-                write_color(std::cout, pixel_samples_scale * color);
+                color *= pixel_samples_scale;
+
+                auto rbyte = char_color(color.x());
+                auto gbyte = char_color(color.y());
+                auto bbyte = char_color(color.z());
+
+                file << static_cast<int>(rbyte) << ' ' << static_cast<int>(gbyte) << ' ' << static_cast<int>(bbyte) << '\n';
             }
         }
-
     }
 
     void render_to_window(const hittable& world, unsigned char* buffer) {
@@ -52,9 +59,9 @@ public:
 
                 color *= pixel_samples_scale;
 
-                buffer[index] = static_cast<unsigned char>(255.999 * color.x());
-                buffer[index + 1] = static_cast<unsigned char>(255.999 * color.y());
-                buffer[index + 2] = static_cast<unsigned char>(255.999 * color.z());
+                buffer[index] = char_color(color.x());
+                buffer[index + 1] = char_color(color.y());
+                buffer[index + 2] = char_color(color.z());
             }
         }
     }
@@ -84,7 +91,7 @@ private:
         vec3 vttb = {0, (double) -viewport_height, 0}; // viewport vector from top to bottom
         vec3 q = camera_pos - vltr / 2 - vttb / 2 - vec3(0,0, focal_length); // top left point of viewport
         pixel_delta_ltr = {viewport_width / *width, 0, 0}; //
-         pixel_delta_ttb = {0, -viewport_height / *height, 0};
+        pixel_delta_ttb = {0, -viewport_height / *height, 0};
         first_pixel = q + pixel_delta_ltr / 2 + pixel_delta_ttb / 2;
 
     }
@@ -136,22 +143,10 @@ private:
         return 0;
     }
 
-    void write_color(std::ostream& out, const vec3& v) {
-
-        auto r = v.x();
-        auto g = v.y();
-        auto b = v.z();
-
-        r = linear_to_gamma(r);
-        g = linear_to_gamma(g);
-        b = linear_to_gamma(b);
-
+    unsigned char char_color(double color) {
         static const interval intensity(0.000, 0.999);
-        int rbyte = int(256 * intensity.clamp(r));
-        int gbyte = int(256 * intensity.clamp(g));
-        int bbyte = int(256 * intensity.clamp(b));
-
-        out << rbyte << ' ' << gbyte << ' ' << bbyte << '\n';
+        return static_cast<unsigned char>(256 * intensity.clamp(linear_to_gamma(color)));
 
     }
+
 };

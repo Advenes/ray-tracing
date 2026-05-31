@@ -2,6 +2,7 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <functional>
 
 #include "../external/imgui/imgui.h"
 #include "../external/imgui/backends/imgui_impl_glfw.h"
@@ -23,7 +24,7 @@ public:
         close_ui();
     }
 
-    void create_ui(GLFWwindow *w, int *samples, int *max_b,
+    void create_ui(GLFWwindow *w, int *samples, int *max_b, int *img_w, int *img_h,
         const std::function<void()>& renderFunc,
         const std::function<void()>& renderToImgFunc
         ) {
@@ -32,6 +33,8 @@ public:
         onRenderToImagePressed = renderToImgFunc;
         samples_per_pixel = samples;
         max_bounces = max_b;
+        img_width = img_w;
+        img_height = img_h;
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -56,7 +59,7 @@ public:
             ImGui::SliderInt("Samples per pixel", samples_per_pixel, 1, 128);
             ImGui::SliderInt("Max bounces", max_bounces, 1, 128);
             ImGui::InputInt("Image Width", img_width, 32, 2048);
-            ImGui::InputInt("Image Height", img_width, 32, 2048);
+            ImGui::InputInt("Image Height", img_height, 32, 2048);
 
             if (ImGui::Button("Render")) {
                 onRenderPressed();
