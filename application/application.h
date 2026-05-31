@@ -1,4 +1,5 @@
 
+#pragma once
 #include <cstdlib>
 #include <vector>
 
@@ -6,13 +7,22 @@
 #include "../hittable/hittable_list.h"
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
+#include "ui.h"
+
 
 class application {
 public:
-    application(const int width, const hittable_list& world, const camera& camera) : width(width), world(world), camera(camera) {}
+    application(int* width, int* height, hittable_list& world, camera& camera) : width(width), height(height), world(world), camera(camera) {}
 
     void run() {
         init_glfw_window();
+
+        ui.create_ui(window, &camera.samples_per_pixel, &camera.max_bounces,
+            [this](){camera.render_to_window(world, pixel_buffer.data());},
+            [this](){camera.render(world);}
+
+            );
+
         init_texture();
         init_framebuffer();
         render();
@@ -29,7 +39,7 @@ private:
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
 
-        window = glfwCreateWindow(width, height, "raytracing", nullptr, nullptr);
+        window = glfwCreateWindow(*width, *height, "raytracing", nullptr, nullptr);
         if (!window) { glfwTerminate(); exit(EXIT_FAILURE); }
         glfwMakeContextCurrent(window);
 
@@ -41,7 +51,7 @@ private:
 
 
     void init_texture() {
-        pixel_buffer.resize(width * height * 3);
+        pixel_buffer.resize(*width * *height * 3);
 
         glGenTextures(1, &textureID);
         glBindTexture(GL_TEXTURE_2D, textureID);
@@ -49,8 +59,8 @@ private:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, *width, *height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, *width, *height, GL_RGB, GL_UNSIGNED_BYTE, pixel_buffer.data());
     }
 
     void init_framebuffer() {
@@ -64,40 +74,68 @@ private:
     void render()
     {
         glfwPollEvents();
-        camera.render_to_window(world, pixel_buffer.data(), width, height);
+
+        glfwGetFramebufferSize(window, width, height);
+
+        int last_width = *width;
+        int last_height = *height;
+
+        camera.width = width;
+        camera.height = height;
+        camera.render_to_window(world, pixel_buffer.data());
 
         glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixel_buffer.data());
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, *width, *height, GL_RGB, GL_UNSIGNED_BYTE, pixel_buffer.data());
 
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
 
-            int display_width, display_height;
-            glfwGetFramebufferSize(window, &display_width, &display_height);
+            glfwGetFramebufferSize(window, width, height);
 
-            glViewport(0, 0, display_width, display_height);
-
+            glViewport(0, 0, *width, *height);
             glClear(GL_COLOR_BUFFER_BIT);
 
-            glBindFramebuffer(GL_FRAMEBUFFER, framebufferID);
+            if (*width != last_width || *height != last_height) {
+                last_width = *width;
+                last_height = *height;
+
+                pixel_buffer.resize(*width * *height * 3);
+                camera.render_to_window(world, pixel_buffer.data());
+
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, *width, *height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+
+            }
+
+            glBindTexture(GL_TEXTURE_2D, textureID);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glViewport(0, 0, *width, *height);
+
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, framebufferID);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-            glBlitFramebuffer(0,0, width, height, 0, display_height, display_width, 0, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+            glBlitFramebuffer(0, 0, *width, *height, 0, *height, *width, 0, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+            ui.render_ui();
+
             glfwSwapBuffers(window);
 
         }
         glDeleteTextures(1, &textureID);
         glDeleteFramebuffers(1, &framebufferID);
         glfwTerminate();
-        return;
     }
 
 private:
-    int width;
-    double aspect_ratio = 16.0 / 9.0;
-    int height = width / aspect_ratio;
-    hittable_list world;
-    camera camera;
+    int *width;
+    int *height;
+    double aspect_ratio;
+    hittable_list& world;
+    camera& camera;
     GLFWwindow* window;
+
+    ui ui;
+
     std::vector<unsigned char> pixel_buffer;
     GLuint textureID;
     GLuint framebufferID;

@@ -16,8 +16,9 @@ enum class render_type {
 
 constexpr render_type RENDER_TYPE = render_type::WINDOW;
 
-constexpr int IMG_WIDTH = 256;
-constexpr double ASPECT_RATIO = 16.0/9.0;
+int IMG_WIDTH = 256;
+double ASPECT_RATIO = 16.0/9.0;
+int IMG_HEIGHT = IMG_WIDTH / ASPECT_RATIO;
 
 int main() {
 
@@ -30,13 +31,13 @@ int main() {
     world.add(std::make_shared<sphere>(vec3(-1.5,0,-1), 0.5, std::make_shared<lambertian>(vec3{0.1,0.4,0.9})));
     world.add(std::make_shared<sphere>(vec3(0.9,-0.1,-0.9), 0.4, std::make_shared<fuzzy_metal>(vec3{1.0,1.0,0.1}, 0.25)));
 
-    camera camera(IMG_WIDTH, ASPECT_RATIO);
+    camera camera(&IMG_WIDTH, &IMG_HEIGHT);
 
     if (RENDER_TYPE == render_type::PPM_FILE) {
         camera.render(world);
     }
     else if (RENDER_TYPE == render_type::WINDOW) {
-        application application(IMG_WIDTH, world, camera);
+        application application(&IMG_WIDTH, &IMG_HEIGHT, world, camera);
         application.run();
     }
 }

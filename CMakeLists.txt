@@ -22,6 +22,26 @@ add_executable(raytracer main.cpp
 
         # glad
         external/glad/src/glad.c
+
+        # imgui
+        external/imgui/imgui.h
+        external/imgui/imgui.cpp
+        external/imgui/imgui_demo.cpp
+        external/imgui/imgui_draw.cpp
+        external/imgui/imgui_tables.cpp
+        external/imgui/imgui_widgets.cpp
+        external/imgui/imconfig.h
+        external/imgui/imgui_internal.h
+        external/imgui/imstb_rectpack.h
+        external/imgui/imstb_textedit.h
+        external/imgui/imstb_truetype.h
+
+        # ImGui Backends
+        external/imgui/backends/imgui_impl_glfw.h
+        external/imgui/backends/imgui_impl_glfw.cpp
+        external/imgui/backends/imgui_impl_opengl3.h
+        external/imgui/backends/imgui_impl_opengl3.cpp
+        camera/camera_controller.h
 )
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
@@ -32,6 +52,9 @@ add_subdirectory(external/glfw)
 
 include_directories(external/glad/include)
 include_directories(external/glfw/include)
+include_directories(external/imgui)
+include_directories(external/imgui/backends)
+
 
 target_link_libraries(raytracer glfw)
 if(NOT APPLE)

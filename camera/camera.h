@@ -5,25 +5,23 @@
 
 class camera {
 public:
-    camera(const int width, const double aspect) {
-        img_width = width;
-        aspect_ratio = aspect;
+    camera(int *w, int *h) : width(w), height(h) {
     }
 
-    int img_width;
-    double aspect_ratio;
-    int samples_per_pixel = 20;
-    int max_bounces = 20;
+    int *width;
+    int *height;
+    int samples_per_pixel = 10;
+    int max_bounces = 10;
 
     void render(const hittable& world) {
         initialize();
         // ppm format stuff
-        std::cout << "P3\n" << img_width << ' ' << img_height << "\n255" <<  '\n';
+        std::cout << "P3\n" << *width << ' ' << *height << "\n255" <<  '\n';
 
 
-        for (int i = 0; i < img_height; i++) {
-            std::clog << "\rScanlines remaining: " << i << ' ' << img_height << '\n' << std::flush;
-            for (int j = 0; j < img_width; j++) {
+        for (int i = 0; i < *height; i++) {
+            std::clog << "\rScanlines remaining: " << i << ' ' << *height << '\n' << std::flush;
+            for (int j = 0; j < *width; j++) {
                 vec3 color(0,0,0);
                 // we sample randomly around our pixel and make a color out of it
                 // to create a basic antialiasing
@@ -37,13 +35,14 @@ public:
 
     }
 
-    void render_to_window(const hittable& world, unsigned char* buffer, int width, int height) {
+    void render_to_window(const hittable& world, unsigned char* buffer) {
         initialize();
+        std::clog << samples_per_pixel << ' ' << max_bounces << '\n';
 
-        for (int i = 0; i < height; i++) {
-            std::clog << "\rScanlines remaining: " << i << ' ' << height << '\n' << std::flush;
-            for (int j = 0; j < width; j++) {
-                int index = (i * img_width + j) * 3;
+        for (int i = 0; i < *height; i++) {
+            std::clog << "\rScanlines remaining: " << i << ' ' << *height << '\n' << std::flush;
+            for (int j = 0; j < *width; j++) {
+                int index = (i * *width + j) * 3;
                 vec3 color(0,0,0);
 
                 for (int sample = 0; sample < samples_per_pixel; sample++) {
@@ -53,11 +52,6 @@ public:
 
                 color *= pixel_samples_scale;
 
-                // Korekcja gamma (linear to gamma 2)
-                double r = linear_to_gamma(color.x());
-                double g = linear_to_gamma(color.y());
-                double b = linear_to_gamma(color.z());
-
                 buffer[index] = static_cast<unsigned char>(255.999 * color.x());
                 buffer[index + 1] = static_cast<unsigned char>(255.999 * color.y());
                 buffer[index + 2] = static_cast<unsigned char>(255.999 * color.z());
@@ -66,8 +60,6 @@ public:
     }
 private:
 
-
-    int img_height;
     vec3 camera_pos;
 
     vec3 pixel_delta_ltr;
@@ -78,12 +70,8 @@ private:
 
     void initialize() {
 
-        // dimesions for out final image
-
-        img_height = int(img_width / aspect_ratio);
-        img_height = (img_height < 1) ? 1 : img_height;
         // aspect ratio and viewport w and h
-        aspect_ratio = double (img_width) / double (img_height);
+        double aspect_ratio = double(*width) / double(*height);
         double viewport_height = 2.0;
         double viewport_width = aspect_ratio * viewport_height;
 
@@ -95,8 +83,8 @@ private:
         vec3 vltr = {viewport_width, 0, 0}; // viewport vector from left to right
         vec3 vttb = {0, (double) -viewport_height, 0}; // viewport vector from top to bottom
         vec3 q = camera_pos - vltr / 2 - vttb / 2 - vec3(0,0, focal_length); // top left point of viewport
-        pixel_delta_ltr = {viewport_width / img_width, 0, 0}; //
-         pixel_delta_ttb = {0, -viewport_height / img_height, 0};
+        pixel_delta_ltr = {viewport_width / *width, 0, 0}; //
+         pixel_delta_ttb = {0, -viewport_height / *height, 0};
         first_pixel = q + pixel_delta_ltr / 2 + pixel_delta_ttb / 2;
 
     }
