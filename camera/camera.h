@@ -20,7 +20,7 @@ public:
     double vfov = 45;
 
     vec3 lookfrom = vec3(0,0,0);
-    vec3 lookat = vec3(0,0,0);
+    vec3 lookat = vec3(0,0,-1);
     const vec3 vup = vec3(0,1,0);
 
 

@@ -92,6 +92,7 @@ private:
         int last_width = *width;
         int last_height = *height;
 
+
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
 
@@ -105,6 +106,7 @@ private:
                 last_height = *height;
 
                 pixel_buffer.resize(*width * *height * 3);
+
             }
 
             update_texture(textureID, pixel_buffer, *width, *height);

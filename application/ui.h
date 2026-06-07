@@ -88,7 +88,9 @@ public:
 
                 if (ImGui::Button("Render"))
                 {
-                    onRenderPressed();
+                    auto timeMS = onRenderPressed();
+                    auto seconds = std::chrono::duration<double>(timeMS).count();
+                    std::clog << timeMS << " in seconds: " << seconds << "s\n";
                 }
 
                 ImGui::PopItemWidth();
@@ -117,8 +119,9 @@ public:
 
                 if (ImGui::Button("Render to image"))
                 {
-                    auto time = onRenderToImagePressed();
-                    ImGui::Text("Render time: %lld ms", time.count());
+                    auto timeMS = onRenderToImagePressed();
+                    auto seconds = std::chrono::duration<double>(timeMS).count();
+                    std::clog << timeMS << " in seconds: " << seconds << "s\n";
                 }
 
                 ImGui::PopItemWidth();
