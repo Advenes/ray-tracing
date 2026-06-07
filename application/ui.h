@@ -7,12 +7,13 @@
 #include "../external/imgui/imgui.h"
 #include "../external/imgui/backends/imgui_impl_glfw.h"
 #include "../external/imgui/backends/imgui_impl_opengl3.h"
+#include "../utils/timer.h"
 
 class ui {
 private:
     GLFWwindow* window = nullptr;
-    std::function<void()> onRenderPressed;
-    std::function<void()> onRenderToImagePressed;
+    std::function<std::chrono::milliseconds()> onRenderPressed;
+    std::function<std::chrono::milliseconds()> onRenderToImagePressed;
     int *samples_per_pixel;
     int *max_bounces;
     int *img_width;
@@ -25,8 +26,8 @@ public:
     }
 
     void create_ui(GLFWwindow *w, int *samples, int *max_b, int *img_w, int *img_h,
-        const std::function<void()>& renderFunc,
-        const std::function<void()>& renderToImgFunc
+        const std::function<std::chrono::milliseconds()>& renderFunc,
+        const std::function<std::chrono::milliseconds()>& renderToImgFunc
         ) {
         window = w;
         onRenderPressed = renderFunc;
@@ -65,7 +66,8 @@ public:
                 onRenderPressed();
             }
             if (ImGui::Button("Render to image")) {
-                onRenderToImagePressed();
+                auto time = onRenderToImagePressed();
+                ImGui::Text("Render time: %lld ms", time.count());
             }
 
             ImGui::End();

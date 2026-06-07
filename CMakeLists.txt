@@ -49,6 +49,7 @@ add_executable(raytracer main.cpp
         external/imgui/backends/imgui_impl_opengl3.h
         external/imgui/backends/imgui_impl_opengl3.cpp
         camera/camera_controller.h
+        utils/timer.h
 )
 
 

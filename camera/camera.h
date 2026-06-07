@@ -3,6 +3,7 @@
 #include "../hittable/hittable_list.h"
 #include "../material/material.h"
 #include <fstream>
+#include "../utils/timer.h"
 
 class camera {
 public:
@@ -13,16 +14,20 @@ public:
     int *height;
     int img_width = 48;
     int img_height = 48;
-    int samples_per_pixel = 10;
-    int max_bounces = 10;
+    int samples_per_pixel = 1;
+    int max_bounces = 1;
 
-    void render(const hittable& world) {
+    std::chrono::milliseconds render(const hittable& world) {
+        // time stuff
+        timer timer;
+        timer.start_timer();
+
         std::ofstream file("output.ppm");
-        initialize();
+        initialize(img_width, img_height);
         // ppm format stuff
         file << "P3\n" << img_width << ' ' << img_height << "\n255" <<  '\n';
         for (int i = 0; i < img_height; i++) {
-            std::clog << "\rScanlines remaining: " << i << ' ' << img_height << '\n';
+            std::clog << "\rScanlines remaining: " << img_height - i << '\n';
             for (int j = 0; j < img_width; j++) {
                 vec3 color(0,0,0);
                 // we sample randomly around our pixel and make a color out of it
@@ -37,17 +42,22 @@ public:
                 auto gbyte = char_color(color.y());
                 auto bbyte = char_color(color.z());
 
-                file << static_cast<int>(rbyte) << ' ' << static_cast<int>(gbyte) << ' ' << static_cast<int>(bbyte) << '\n';
+                file << (rbyte) << ' ' << (gbyte) << ' ' << (bbyte) << '\n';
             }
         }
+
+        return timer.stop_timer();
     }
 
-    void render_to_window(const hittable& world, unsigned char* buffer) {
-        initialize();
+    std::chrono::milliseconds render_to_window(const hittable& world, unsigned char* buffer) {
+        timer timer;
+        timer.start_timer();
+
+        initialize(*width, *height);
         std::clog << samples_per_pixel << ' ' << max_bounces << '\n';
 
         for (int i = 0; i < *height; i++) {
-            std::clog << "\rScanlines remaining: " << i << ' ' << *height << '\n' << std::flush;
+            std::clog << "\rScanlines remaining: " << *height - i << '\n';
             for (int j = 0; j < *width; j++) {
                 int index = (i * *width + j) * 3;
                 vec3 color(0,0,0);
@@ -64,6 +74,8 @@ public:
                 buffer[index + 2] = char_color(color.z());
             }
         }
+
+        return timer.stop_timer();
     }
 private:
 
@@ -75,10 +87,10 @@ private:
 
     double pixel_samples_scale;
 
-    void initialize() {
+    void initialize(int w, int h) {
 
         // aspect ratio and viewport w and h
-        double aspect_ratio = double(*width) / double(*height);
+        double aspect_ratio = double(w) / double(h);
         double viewport_height = 2.0;
         double viewport_width = aspect_ratio * viewport_height;
 
@@ -90,8 +102,8 @@ private:
         vec3 vltr = {viewport_width, 0, 0}; // viewport vector from left to right
         vec3 vttb = {0, (double) -viewport_height, 0}; // viewport vector from top to bottom
         vec3 q = camera_pos - vltr / 2 - vttb / 2 - vec3(0,0, focal_length); // top left point of viewport
-        pixel_delta_ltr = {viewport_width / *width, 0, 0}; //
-        pixel_delta_ttb = {0, -viewport_height / *height, 0};
+        pixel_delta_ltr = {viewport_width / w, 0, 0}; //
+        pixel_delta_ttb = {0, -viewport_height / h, 0};
         first_pixel = q + pixel_delta_ltr / 2 + pixel_delta_ttb / 2;
 
     }
@@ -143,9 +155,9 @@ private:
         return 0;
     }
 
-    unsigned char char_color(double color) {
+    int char_color(double color) {
         static const interval intensity(0.000, 0.999);
-        return static_cast<unsigned char>(256 * intensity.clamp(linear_to_gamma(color)));
+        return (int)(256 * intensity.clamp(linear_to_gamma(color)));
 
     }
 

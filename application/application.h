@@ -18,8 +18,8 @@ public:
         init_glfw_window();
 
         ui.create_ui(window, &camera.samples_per_pixel, &camera.max_bounces, &camera.img_width, &camera.img_height,
-            [this](){camera.render_to_window(world, pixel_buffer.data());},
-            [this](){camera.render(world);}
+            [this]()->std::chrono::milliseconds{return camera.render_to_window(world, pixel_buffer.data()); },
+            [this]()->std::chrono::milliseconds{return camera.render(world);}
 
             );
 
@@ -92,8 +92,6 @@ private:
         int last_width = *width;
         int last_height = *height;
 
-        camera.render_to_window(world, pixel_buffer.data());
-
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
 
@@ -107,8 +105,6 @@ private:
                 last_height = *height;
 
                 pixel_buffer.resize(*width * *height * 3);
-                camera.render_to_window(world, pixel_buffer.data());
-
             }
 
             update_texture(textureID, pixel_buffer, *width, *height);
