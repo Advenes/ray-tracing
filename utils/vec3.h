@@ -31,6 +31,11 @@ public:
         return *this;
     }
 
+    bool operator!=(const vec3& v) const {
+        if (this->x() == v.x() && this->y() == v.y() && this->z() == v.z()) return false;
+        return true;
+    }
+
     vec3& operator/=(double t) {
         return *this *= 1/t;
     }

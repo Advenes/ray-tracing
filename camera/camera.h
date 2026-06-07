@@ -4,6 +4,7 @@
 #include "../material/material.h"
 #include <fstream>
 #include "../utils/timer.h"
+#include <cassert>
 
 class camera {
 public:
@@ -16,6 +17,12 @@ public:
     int img_height = 48;
     int samples_per_pixel = 1;
     int max_bounces = 1;
+    double vfov = 45;
+
+    vec3 lookfrom = vec3(0,0,0);
+    vec3 lookat = vec3(0,0,0);
+    const vec3 vup = vec3(0,1,0);
+
 
     std::chrono::milliseconds render(const hittable& world) {
         // time stuff
@@ -87,23 +94,30 @@ private:
 
     double pixel_samples_scale;
 
-    void initialize(int w, int h) {
+    void initialize(const int w,const int h) {
 
         // aspect ratio and viewport w and h
+        double focal_length = (lookfrom - lookat).length();
         double aspect_ratio = double(w) / double(h);
-        double viewport_height = 2.0;
+        auto theta = degrees_to_radians(vfov);
+        auto vh = std::tan(theta/2);
+        auto viewport_height = 2 * vh * focal_length;
         double viewport_width = aspect_ratio * viewport_height;
 
         pixel_samples_scale = 1.0 / samples_per_pixel;
 
-        camera_pos = {0,0,0};
+        assert(!(lookfrom - lookat).near_zero() && "camera looks the same direction it looks from");
+        vec3 wvec = unit_vector(lookfrom - lookat);
+        vec3 u = unit_vector(cross(vup, wvec));
+        vec3 v = unit_vector(cross(wvec, u));
 
-        double focal_length = 1.0;
-        vec3 vltr = {viewport_width, 0, 0}; // viewport vector from left to right
-        vec3 vttb = {0, (double) -viewport_height, 0}; // viewport vector from top to bottom
-        vec3 q = camera_pos - vltr / 2 - vttb / 2 - vec3(0,0, focal_length); // top left point of viewport
-        pixel_delta_ltr = {viewport_width / w, 0, 0}; //
-        pixel_delta_ttb = {0, -viewport_height / h, 0};
+        camera_pos = lookfrom;
+
+        vec3 vltr = viewport_width * u; // viewport vector from left to right
+        vec3 vttb = viewport_height * -v; // viewport vector from top to bottom
+        vec3 q = camera_pos - (focal_length * wvec) - vltr / 2 - vttb / 2 ; // top left point of viewport
+        pixel_delta_ltr = vltr / w; //
+        pixel_delta_ttb = vttb / h;
         first_pixel = q + pixel_delta_ltr / 2 + pixel_delta_ttb / 2;
 
     }

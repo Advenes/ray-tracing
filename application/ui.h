@@ -9,6 +9,23 @@
 #include "../external/imgui/backends/imgui_impl_opengl3.h"
 #include "../utils/timer.h"
 
+
+inline bool DrawVec3Control(const char* label, vec3& value)
+{
+    double values[3] = { value.x(), value.y(), value.z() };
+
+    bool changed = ImGui::DragScalarN(label, ImGuiDataType_Double, values,3, 0.05f);
+
+    if (changed)
+    {
+        value.e[0] = values[0];
+        value.e[1] = values[1];
+        value.e[2] = values[2];
+    }
+
+    return changed;
+}
+
 class ui {
 private:
     GLFWwindow* window = nullptr;
@@ -18,14 +35,16 @@ private:
     int *max_bounces;
     int *img_width;
     int *img_height;
+    vec3 *cam_pos;
+    vec3 *cam_look;
+    double *vfov;
 public:
-    ui() {}
 
     ~ui() {
         close_ui();
     }
 
-    void create_ui(GLFWwindow *w, int *samples, int *max_b, int *img_w, int *img_h,
+    void create_ui(GLFWwindow *w, int *samples, int *max_b, int *img_w, int *img_h, vec3 *cam_position, vec3 *cam_looking_spot, double *vertical_fov,
         const std::function<std::chrono::milliseconds()>& renderFunc,
         const std::function<std::chrono::milliseconds()>& renderToImgFunc
         ) {
@@ -36,6 +55,9 @@ public:
         max_bounces = max_b;
         img_width = img_w;
         img_height = img_h;
+        cam_pos = cam_position;
+        cam_look = cam_looking_spot;
+        vfov = vertical_fov;
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -53,21 +75,53 @@ public:
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        {
-            ImGui::Begin("Renderer 1.0");
-            ImGui::Text("settings:");
+        {ImGui::Begin("Renderer 1.0");
 
-            ImGui::SliderInt("Samples per pixel", samples_per_pixel, 1, 128);
-            ImGui::SliderInt("Max bounces", max_bounces, 1, 128);
-            ImGui::InputInt("Image Width", img_width, 32, 2048);
-            ImGui::InputInt("Image Height", img_height, 32, 2048);
+            ImGui::Text("Settings");
 
-            if (ImGui::Button("Render")) {
-                onRenderPressed();
+            if (ImGui::CollapsingHeader("Rendering Options", ImGuiTreeNodeFlags_DefaultOpen))
+            {
+                ImGui::PushItemWidth(120);
+
+                ImGui::SliderInt("Samples per pixel", samples_per_pixel, 1, 128);
+                ImGui::SliderInt("Max bounces", max_bounces, 1, 128);
+
+                if (ImGui::Button("Render"))
+                {
+                    onRenderPressed();
+                }
+
+                ImGui::PopItemWidth();
             }
-            if (ImGui::Button("Render to image")) {
-                auto time = onRenderToImagePressed();
-                ImGui::Text("Render time: %lld ms", time.count());
+
+            if (ImGui::CollapsingHeader("Camera Options", ImGuiTreeNodeFlags_DefaultOpen))
+            {
+                ImGui::PushItemWidth(120);
+
+                DrawVec3Control("Camera Position", *cam_pos);
+                DrawVec3Control("Camera Direction", *cam_look);
+
+                double min = 1.0;
+                double max = 128.0;
+                ImGui::SliderScalar("Camera Vertical Fov", ImGuiDataType_Double, vfov, &min, &max, "%.1f");
+
+                ImGui::PopItemWidth();
+            }
+
+            if (ImGui::CollapsingHeader("Rendering To Image", ImGuiTreeNodeFlags_DefaultOpen))
+            {
+                ImGui::PushItemWidth(100);
+
+                ImGui::InputInt("Image Width", img_width, 32, 2048);
+                ImGui::InputInt("Image Height", img_height, 32, 2048);
+
+                if (ImGui::Button("Render to image"))
+                {
+                    auto time = onRenderToImagePressed();
+                    ImGui::Text("Render time: %lld ms", time.count());
+                }
+
+                ImGui::PopItemWidth();
             }
 
             ImGui::End();

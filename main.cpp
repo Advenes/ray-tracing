@@ -16,7 +16,7 @@ enum class render_type {
 
 constexpr render_type RENDER_TYPE = render_type::WINDOW;
 
-int IMG_WIDTH = 256;
+int IMG_WIDTH = 1024;
 double ASPECT_RATIO = 16.0/9.0;
 int IMG_HEIGHT = IMG_WIDTH / ASPECT_RATIO;
 

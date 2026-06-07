@@ -17,7 +17,7 @@ public:
     void run() {
         init_glfw_window();
 
-        ui.create_ui(window, &camera.samples_per_pixel, &camera.max_bounces, &camera.img_width, &camera.img_height,
+        ui.create_ui(window, &camera.samples_per_pixel, &camera.max_bounces, &camera.img_width, &camera.img_height, &camera.lookfrom, &camera.lookat, &camera.vfov,
             [this]()->std::chrono::milliseconds{return camera.render_to_window(world, pixel_buffer.data()); },
             [this]()->std::chrono::milliseconds{return camera.render(world);}
 
