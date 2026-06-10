@@ -95,7 +95,6 @@ private:
 
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
-
             glfwGetFramebufferSize(window, width, height);
 
             glViewport(0, 0, *width, *height);

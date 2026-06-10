@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <functional>
@@ -90,7 +91,7 @@ public:
                 {
                     auto timeMS = onRenderPressed();
                     auto seconds = std::chrono::duration<double>(timeMS).count();
-                    std::clog << timeMS << " in seconds: " << seconds << "s\n";
+                    std::clog << timeMS.count() << " in seconds: " << seconds << "s\n";
                 }
 
                 ImGui::PopItemWidth();
@@ -121,7 +122,7 @@ public:
                 {
                     auto timeMS = onRenderToImagePressed();
                     auto seconds = std::chrono::duration<double>(timeMS).count();
-                    std::clog << timeMS << " in seconds: " << seconds << "s\n";
+                    std::clog << timeMS.count() << " in seconds: " << seconds << "s\n";
                 }
 
                 ImGui::PopItemWidth();
