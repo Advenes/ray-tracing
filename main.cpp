@@ -25,18 +25,33 @@ int main() {
     hittable_list world;
 
     // add all balls
-    world.add(std::make_shared<sphere>(vec3(0,-100.5,-3), 100, std::make_shared<lambertian>(vec3{0.3,0.3,0.3})));
-    world.add(std::make_shared<sphere>(vec3(-0.15,0,-1), 0.5, std::make_shared<metal>(vec3{1.0,0.4,0.2})));
-    world.add(std::make_shared<sphere>(vec3(3,2.0,-3.5), 1.5, std::make_shared<metal>(vec3{0.3,1.0,0.3})));
-    world.add(std::make_shared<sphere>(vec3(-1.5,0,-1), 0.5, std::make_shared<lambertian>(vec3{0.1,0.4,0.9})));
-    world.add(std::make_shared<sphere>(vec3(0.9,-0.1,-0.9), 0.4, std::make_shared<fuzzy_metal>(vec3{1.0,1.0,0.1}, 0.25)));
+
+
+    auto big_center = vec3(0,-150,-150);
+    auto radius = 150.0;
+    world.add(std::make_shared<sphere>(big_center, radius, std::make_shared<lambertian>(vec3{0.1,0.1,0.2})));
+    for (int i{0}; i < 100; i++) {
+        vec3 dir = random_unit_vector();
+        while (dir.y() < 0.90) {
+            dir = random_unit_vector();
+        }
+        auto r = random_double() * 5;
+        auto point = big_center + (radius + r) * dir;
+        auto color = vec3::random();
+
+        std::shared_ptr<material> material;
+        if (i % 2 == 0) material = std::make_shared<metal>(color);
+        else material = std::make_shared<lambertian>(color);
+        world.add(std::make_shared<sphere>(point, r, material));
+
+    }
 
     camera camera(&IMG_WIDTH, &IMG_HEIGHT);
 
-    if (RENDER_TYPE == render_type::PPM_FILE) {
+    if constexpr (RENDER_TYPE == render_type::PPM_FILE) {
         camera.render(world);
     }
-    else if (RENDER_TYPE == render_type::WINDOW) {
+    else {
         application application(&IMG_WIDTH, &IMG_HEIGHT, world, camera);
         application.run();
     }

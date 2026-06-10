@@ -11,7 +11,7 @@ class fuzzy_metal : public material {
         if (with_distortion.near_zero()) {
             with_distortion = rec.normal;
         }
-        scattered = ray(rec.p, with_distortion);
+        scattered = ray(rec.p, with_distortion, r_in.time());
         attenuation = albedo;
         return (dot(scattered.direction(), rec.normal) > 0);
     }
