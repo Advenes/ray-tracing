@@ -2,23 +2,39 @@
 #include "../utils/common_includes.h"
 #include "../hittable/hittable_list.h"
 #include "../material/material.h"
+#include <fstream>
+#include "../utils/timer.h"
+#include <cassert>
 
 class camera {
 public:
-    int img_width = 512;
-    double aspect_ratio = 1.0;
-    int samples_per_pixel = 100;
-    int max_bounces = 100;
+    camera(int *w, int *h) : width(w), height(h) {
+    }
 
-    void render(const hittable& world) {
+    int *width;
+    int *height;
+    int img_width = 48;
+    int img_height = 48;
+    int samples_per_pixel = 1;
+    int max_bounces = 1;
+    double vfov = 45;
 
-        initialize();
+    vec3 lookfrom = vec3(0,0,0);
+    vec3 lookat = vec3(0,0,-1);
+    const vec3 vup = vec3(0,1,0);
+
+
+    std::chrono::milliseconds render(const hittable& world) {
+        // time stuff
+        timer timer;
+        timer.start_timer();
+
+        std::ofstream file("output.ppm");
+        initialize(img_width, img_height);
         // ppm format stuff
-        std::cout << "P3\n" << img_width << ' ' << img_height << "\n255" <<  '\n';
-
-
+        file << "P3\n" << img_width << ' ' << img_height << "\n255" <<  '\n';
         for (int i = 0; i < img_height; i++) {
-            std::clog << "\rScanlines remaining: " << i << ' ' << img_height << '\n' << std::flush;
+            std::clog << "\rScanlines remaining: " << img_height - i << '\n';
             for (int j = 0; j < img_width; j++) {
                 vec3 color(0,0,0);
                 // we sample randomly around our pixel and make a color out of it
@@ -27,15 +43,49 @@ public:
                     ray r = get_ray(j, i);
                     color += ray_color(r, max_bounces, world);
                 }
-                write_color(std::cout, pixel_samples_scale * color);
+                color *= pixel_samples_scale;
+
+                auto rbyte = char_color(color.x());
+                auto gbyte = char_color(color.y());
+                auto bbyte = char_color(color.z());
+
+                file << (rbyte) << ' ' << (gbyte) << ' ' << (bbyte) << '\n';
             }
         }
 
+        return timer.stop_timer();
     }
 
+    std::chrono::milliseconds render_to_window(const hittable& world, unsigned char* buffer) {
+        timer timer;
+        timer.start_timer();
+
+        initialize(*width, *height);
+        std::clog << samples_per_pixel << ' ' << max_bounces << '\n';
+
+        for (int i = 0; i < *height; i++) {
+            std::clog << "\rScanlines remaining: " << *height - i << '\n';
+            for (int j = 0; j < *width; j++) {
+                int index = (i * *width + j) * 3;
+                vec3 color(0,0,0);
+
+                for (int sample = 0; sample < samples_per_pixel; sample++) {
+                    ray r = get_ray(j, i);
+                    color += ray_color(r, max_bounces, world);
+                }
+
+                color *= pixel_samples_scale;
+
+                buffer[index] = char_color(color.x());
+                buffer[index + 1] = char_color(color.y());
+                buffer[index + 2] = char_color(color.z());
+            }
+        }
+
+        return timer.stop_timer();
+    }
 private:
 
-    int img_height;
     vec3 camera_pos;
 
     vec3 pixel_delta_ltr;
@@ -44,27 +94,30 @@ private:
 
     double pixel_samples_scale;
 
-    void initialize() {
+    void initialize(const int w,const int h) {
 
-        // dimesions for out final image
-
-        img_height = int(img_width / aspect_ratio);
-        img_height = (img_height < 1) ? 1 : img_height;
         // aspect ratio and viewport w and h
-        aspect_ratio = double (img_width) / double (img_height);
-        double viewport_height = 2.0;
+        double focal_length = (lookfrom - lookat).length();
+        double aspect_ratio = double(w) / double(h);
+        auto theta = degrees_to_radians(vfov);
+        auto vh = std::tan(theta/2);
+        auto viewport_height = 2 * vh * focal_length;
         double viewport_width = aspect_ratio * viewport_height;
 
         pixel_samples_scale = 1.0 / samples_per_pixel;
 
-        camera_pos = {0,0,0};
+        assert(!(lookfrom - lookat).near_zero() && "camera looks the same direction it looks from");
+        vec3 wvec = unit_vector(lookfrom - lookat);
+        vec3 u = unit_vector(cross(vup, wvec));
+        vec3 v = unit_vector(cross(wvec, u));
 
-        double focal_length = 1.0;
-        vec3 vltr = {viewport_width, 0, 0}; // viewport vector from left to right
-        vec3 vttb = {0, (double) -viewport_height, 0}; // viewport vector from top to bottom
-        vec3 q = camera_pos - vltr / 2 - vttb / 2 - vec3(0,0, focal_length); // top left point of viewport
-        pixel_delta_ltr = {viewport_width / img_width, 0, 0}; //
-         pixel_delta_ttb = {0, -viewport_height / img_height, 0};
+        camera_pos = lookfrom;
+
+        vec3 vltr = viewport_width * u; // viewport vector from left to right
+        vec3 vttb = viewport_height * -v; // viewport vector from top to bottom
+        vec3 q = camera_pos - (focal_length * wvec) - vltr / 2 - vttb / 2 ; // top left point of viewport
+        pixel_delta_ltr = vltr / w; //
+        pixel_delta_ttb = vttb / h;
         first_pixel = q + pixel_delta_ltr / 2 + pixel_delta_ttb / 2;
 
     }
@@ -80,8 +133,9 @@ private:
 
         auto ray_origin = camera_pos;
         auto ray_direction = pixel_sample - ray_origin;
+        auto time = random_double();
 
-        return ray(ray_origin, ray_direction);
+        return ray(ray_origin, ray_direction, time);
     }
 
     vec3 sample_square() const {
@@ -116,22 +170,10 @@ private:
         return 0;
     }
 
-    void write_color(std::ostream& out, const vec3& v) {
-
-        auto r = v.x();
-        auto g = v.y();
-        auto b = v.z();
-
-        r = linear_to_gamma(r);
-        g = linear_to_gamma(g);
-        b = linear_to_gamma(b);
-
+    int char_color(double color) {
         static const interval intensity(0.000, 0.999);
-        int rbyte = int(256 * intensity.clamp(r));
-        int gbyte = int(256 * intensity.clamp(g));
-        int bbyte = int(256 * intensity.clamp(b));
-
-        out << rbyte << ' ' << gbyte << ' ' << bbyte << '\n';
+        return (int)(256 * intensity.clamp(linear_to_gamma(color)));
 
     }
+
 };

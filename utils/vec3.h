@@ -1,7 +1,6 @@
 
 #pragma once
 #include <iostream>
-#include <sys/errno.h>
 
 class vec3 {
 public:
@@ -30,6 +29,11 @@ public:
         e[1] *= t;
         e[2] *= t;
         return *this;
+    }
+
+    bool operator!=(const vec3& v) const {
+        if (this->x() == v.x() && this->y() == v.y() && this->z() == v.z()) return false;
+        return true;
     }
 
     vec3& operator/=(double t) {

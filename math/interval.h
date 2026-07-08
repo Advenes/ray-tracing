@@ -1,3 +1,4 @@
+#pragma once
 #include "constants.h"
 
 class interval {
@@ -6,7 +7,7 @@ public:
 
     interval() : min(+infinity), max(-infinity) {}
 
-    interval(double min, double max) : min(min), max(max) {}
+    interval( double min, double max) : min(min), max(max) {}
 
     double size() const {
         return max - min;
@@ -26,7 +27,17 @@ public:
         return x;
     }
 
+    interval(const interval& a, const interval& b) {
+        min = a.min <= b.min ? a.min : b.min;
+        max = a.max >= b.max ? a.max : b.max;
+    }
+
     static const interval empty, universe;
+
+    interval expand(double delta) const {
+        auto padding = delta / 2;
+        return interval(min - padding, max + padding);
+    }
 };
 
 const interval interval::empty    = interval(+infinity, -infinity);
