@@ -2,6 +2,7 @@
 #include "hittable.h"
 #include <vector>
 #include <memory>
+#include "../boundings/aabb.h"
 
 class hittable_list : public hittable {
 public:
@@ -15,7 +16,8 @@ public:
     void clear() { objects.clear(); }
 
     void add(std::shared_ptr<hittable> object) {
-        objects.push_back(object);
+        objects.push_back(std::move(object));
+        bbox = aabb(bbox, objects.back()->bounding_box());
     }
 
     bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
@@ -33,4 +35,12 @@ public:
         // the one thats closest to the camera has already changed the rec, so we only return true or false
         return hit_anything;
     }
+
+    aabb bounding_box() const override {
+        return bbox;
+    }
+
+
+private:
+    aabb bbox;
 };
